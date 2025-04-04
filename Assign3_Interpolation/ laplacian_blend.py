@@ -13,9 +13,9 @@ def gaussian_pyramid(image, levels):
 # Function to create Laplacian pyramid
 def laplacian_pyramid(g_pyramid):
     l_pyramid = []
-    for i in range(len(g_pyramid) - 1):
+    for i in range(len(g_pyramid)-1):
         # Upsample the next Gaussian level to the current level size
-        upsampled = cv2.pyrUp(g_pyramid[i + 1])
+        upsampled = cv2.pyrUp(g_pyramid[i+1])
         # !!!!!!!!!! Resize to match current level !!!!!!!!!!!!
         upsampled = cv2.resize(upsampled, (g_pyramid[i].shape[1], g_pyramid[i].shape[0]))
         # Subtract the upsampled image from the current Gaussian level to get the Laplacian 
@@ -29,7 +29,7 @@ def laplacian_pyramid(g_pyramid):
 # Function to reconstruct image from Laplacian pyramid
 def reconstruct_laplacian_pyramid(l_pyramid):
     image = l_pyramid[-1]
-    for i in range(len(l_pyramid) - 2, -1, -1):
+    for i in range(len(l_pyramid)-2, -1, -1):
         image = cv2.pyrUp(image)  # Upsample the image
         # !!!!!!! Resize !!!!!!!!!!
         image = cv2.resize(image, (l_pyramid[i].shape[1], l_pyramid[i].shape[0]))
@@ -50,29 +50,25 @@ def laplacian_blending(image1, image2, mask, levels=6):
     # Blend the Laplacian pyramids
     l_pyramid_blend = []
     for i in range(levels):
-        h, w = l_pyramid1[i].shape[:2]
-        m = cv2.resize(g_pyramid_mask[i], (w, h))
-        l1 = cv2.resize(l_pyramid1[i], (w, h))
-        l2 = cv2.resize(l_pyramid2[i], (w, h))
-        blended = cv2.multiply(l1, m) + cv2.multiply(l2, 1.0 - m)
+        blended = cv2.multiply(l_pyramid1[i], g_pyramid_mask[i]) + cv2.multiply(l_pyramid2[i], (1 - g_pyramid_mask[i]))
+        blended = cv2.resize(blended, (l_pyramid1[i].shape[1], l_pyramid1[i].shape[0]))
         l_pyramid_blend.append(blended)
-
     # Reconstruct the blended image from the Laplacian pyramid
     blended_image = reconstruct_laplacian_pyramid(l_pyramid_blend)
     return np.clip(blended_image, 0, 1)
 
 # Load the input images (ensure they are the same size)
-image1 = cv2.imread('greenblue.jpg')  # Replace with your first image
-image2 = cv2.imread('image.jpg')  # Replace with your second image
-mask = cv2.imread('mask.jpg', cv2.IMREAD_GRAYSCALE)  # Replace with your mask image (binary mask)
+image1 = cv2.imread('apple.jpg')  # Replace with your first image
+image2 = cv2.imread('orange.jpg')  # Replace with your second image
+mask = cv2.imread('mask2.jpg', cv2.IMREAD_GRAYSCALE)  # Replace with your mask image (binary mask)
 
 if image1 is None or image2 is None or mask is None:
     raise FileNotFoundError("Error: Unable to load image. Check the file path.")
 
 # Convert images to RGB (matplotlib uses RGB, OpenCV uses BGR)
-image1_rgb = cv2.cvtColor(image1, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0
-image2_rgb = cv2.cvtColor(image2, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0
-mask_rgb = cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB).astype(np.float32) / 255.0
+image1_rgb = cv2.cvtColor(image1, cv2.COLOR_BGR2RGB).astype(np.float32) / 255
+image2_rgb = cv2.cvtColor(image2, cv2.COLOR_BGR2RGB).astype(np.float32) / 255
+mask_rgb = cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB).astype(np.float32) / 255
 
 # Resize mask to match image size
 height, width = image1.shape[:2]
